@@ -47,42 +47,44 @@ codefenix@conchaos.synchro.net
 
 ## Instructions:
 
- 1. Extract the contents of the sixelgallery.zip to /sbbs/xtrn/sixelgallery
+ 1. Extract the contents of the ZIP file to /sbbs/xtrn/sixelgallery
  
  2. Download and install ImageMagick from: https://imagemagick.org
  
- 3. In your favorite text editor, open sixelgallery.js and edit the value
-    of `PATH_TO_IM_CONV` to the path where ImageMagick is installed on your 
-    system, including the "convert" executable itself. 
+ 3. In your favorite text editor, open settings.ini and edit the value
+    of `path_to_im_conv` to the path where ImageMagick is installed on your 
+    system, including the "convert" executable itself.
+
+    `path_to_im_conv = c:\imagemagick\convert.exe`
     
- 4. Add as many paths as you want to have menu options in the the paths object.
-         
-    `[ "Menu name", "path_to_option",  clean_up_subdirectories ]`
-    
-    The clean_up_subdirectories option removes subdirectories created as 
-    a result of browsing ZIP files. 
+ 5. Add as many paths as you want to have menu options in the the paths.json file.
  
     Examples:
     ```
     [
-        "Some homemade food",         // ....... Menu name 
-        "c:\\files\\images\\food",    // ....... Path to directory
-        false                         // ....... Clean up subdirectories
-    ],
-    [
-        "GIFs Galore CD-ROM",         // ....... Menu name 
-        "c:\\files\\gifgalor\\GIFS",  // ....... Path to directory
-        false                         // ....... Clean up subdirectories
-    ],
-    [ 
-        "fsxNet Images",              // ....... Menu name 
-        "c:\\files\\fsxnet_imge",     // ....... Path to directory
-        true                          // ....... Clean up subdirectories
+       {
+          "name": "Some homemade food",
+          "path": "c:\\files\\images\\food",
+          "cleanup_zip_subdirs": false
+       },
+       {
+          "name": "GIFs Galore CD-ROM",
+          "path": "c:\\files\\gifgalor\\GIFS",
+          "cleanup_zip_subdirs": false
+       },
+       {
+          "name": "fsxNet Images",
+          "path": "c:\\files\\fsxnet_imge",
+          "cleanup_zip_subdirs": true
+       }
     ]
     ```
+             
+    The `cleanup_zip_subdirs` option removes subdirectories created as 
+    a result of browsing ZIP files. 
    
     
- 5. Add to SCFG -> External Programs-> Online Programs (Doors):
+ 6. Add to SCFG -> External Programs-> Online Programs (Doors):
 
     ```
     Name                  Sixel Gallery
@@ -91,7 +93,7 @@ codefenix@conchaos.synchro.net
     Command Line          ?sixelgallery
     ```
 
- 6. Add to File Options -> Viewable Files: 
+ 7. Add to File Options -> Viewable Files: 
 
     ```
     GIF   ?../xtrn/sixelgallery/sixelgallery.js %f
@@ -108,22 +110,19 @@ codefenix@conchaos.synchro.net
 
  Edit the included sixelgallery.msg file to your liking in PabloDraw.
  
- The `MAX_WIDTH` and `MAX_HEIGHT` settings near the top of the script were 
- decided on somewhat arbitrarily. You can change them if you wish. I found 
+ The `scale_max_width` and `scale_max_height` settings were 
+ decided on somewhat arbitrarily, but they can be changed. I found 
  that images of this size filled the screen of a typical 80x24 SyncTERM 
  console nicely.
  
  If you don't wish to auto-scale your images in the terminal, you can set
- the optionScale variable to false, and ImageMagick will not scale down the
+ the `scale` setting to false, and ImageMagick will not scale down the
  resulting image. However, they will likely end up being too large to view
  all at once.
 
 
 
 ## Other Notes
-
- I was too lazy to make an INI file to hold the config options. Maybe I'll
- add that someday so that people don't have to modify the JS file.
  
  I thought it might be cool to add support for animations, such as animated
  GIF files, as evidenced by some of the comments in the code. Maybe an 
