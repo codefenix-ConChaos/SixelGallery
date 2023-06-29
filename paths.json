@@ -1,0 +1,17 @@
+[
+   {
+      "name": "Some homemade food",
+      "path": "c:\\files\\images\\food",
+      "cleanup_zip_subdirs": false
+   },
+   {
+      "name": "GIFs Galore CD-ROM",
+      "path": "c:\\files\\gifgalor\\GIFS",
+      "cleanup_zip_subdirs": false
+   },
+   {
+      "name": "fsxNet Images",
+      "path": "c:\\files\\fsxnet_imge",
+      "cleanup_zip_subdirs": true
+   }
+]
