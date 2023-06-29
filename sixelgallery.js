@@ -2,46 +2,18 @@ load('cterm_lib.js');
 load("sbbsdefs.js");
 load("filebrowser.js");
 
-const PATH_TO_IM_CONV = "path_to_convert.exe";
-const TEMP_SIXEL_PATH = "C:\\sbbs\\xtrn\\sixelgallery\\";
-const NODE_NUM = bbs.node_num;
-
-var MAX_WIDTH = "640";
-var MAX_HEIGHT = "370";
-
-var optionScale = true;
-
-var paths = [
-    
-    [
-        "Some homemade food",         // ....... Menu name 
-        "c:\\files\\images\\food",    // ....... Path to directory
-        false                         // ....... Clean up subdirectories
-    ],
-    [
-        "GIFs Galore CD-ROM",         // ....... Menu name 
-        "c:\\files\\gifgalor\\GIFS",  // ....... Path to directory
-        false                         // ....... Clean up subdirectories
-    ],
-    [ 
-        "fsxNet Images",              // ....... Menu name 
-        "c:\\files\\fsxnet_imge",     // ....... Path to directory
-        true                          // ....... Clean up subdirectories
-    ]
-];
+const MENU_ITEM_FMT = "\x01c\x01h%2d\x01k\x01h)\x01n %s\x010\x01n"
 
 function convertImage(imgPath) {
     log(LOG_INFO, "viewing: '" + imgPath + "'");
     if (file_exists(imgPath)) {
         console.clear(false);
-        print("Preparing, \1b\1h" + file_getname(imgPath) + " \1w\1hplease wait.\1n.\1k\1h..\1n.\1k\1h.\1w\1h!");
-        if (!optionScale) {
-            print("\1n\1k(scaling is disabled, so this may take a while)");
+        print("Preparing \x01b\x01h" + file_getname(imgPath) + " \x01w\x01hplease wait.\x01n.\x01k\x01h..\x01n.\x01k\x01h.\x01w\x01h!");
+        if (!scale) {
+            print("\x01n\x01k(scaling is disabled, so this may take a while)");
         }
-        // Imagemagick usage:
-        // convert input.gif output.sixel
-        var tmpSixel = TEMP_SIXEL_PATH + "temp" + NODE_NUM + ".sixel";
-        var cmd = PATH_TO_IM_CONV + " " + imgPath + " " + (optionScale === true ? ("-resize " + MAX_WIDTH + "x" + MAX_HEIGHT + " ") : "") + tmpSixel;
+        var tmpSixel = backslash(temp_sixel_path) + "temp" + bbs.node_num + ".sixel";
+        var cmd = path_to_im_conv + " " + imgPath + " " + (scale === true ? ("-resize " + scale_max_width + "x" + scale_max_height + " ") : "") + tmpSixel;
         var rslt = system.exec(cmd);
         if (rslt == 0) {
             console.clear(false);
@@ -63,7 +35,6 @@ function convertImage(imgPath) {
         }
     }
 }
-
 
 function show_sixel(fn) { // borrowed from C.G. Learn's sixel.js ... Thank you and RIP
     var image = new File(fn);
@@ -96,12 +67,12 @@ function browseFiles(path) {
         'hide': ["???CAT.GIF", "*.DAB", "*.DAT", "*.EXB", "*.IXB", "*.RAW",
             "*.htm*", "*.com", "*.exe", "*.BBS", "UTILITY", "*.DIZ", "FLI",
             "*.DIR", "*.ANS", "*.ASC", "*.XB", "*.PDF", "*.CN", "*.RIP",
-            "*.MP*", "*.NFO"]
+            "*.MP*", "*.NFO", "*.INI", "*.SDT", "*.SHA", "*.SHD", "*.SID"]
     });
     fb.on(
         "fileSelect",
         function (fn) {
-        print("\1n\x010\1L");
+        print("\x01n\x010\x01L");
         var ext = file_getext(fn);
         if (typeof ext != "undefined" && ext.toLowerCase() == ".zip") {
             var destDir = fn.replace(ext, "");
@@ -132,77 +103,92 @@ function browseFiles(path) {
         fb.cycle();
     }
     fb.close();
-    printf("\1n\x010\1L");
+    printf("\x01n\x010\x01L");
     console.clear();
     console.home();
 }
 
 function mainMenu() {
-    var selection = "";
-    while (bbs.online && selection !== "Q") {
-        printf("\1n\x010\1L");
-        console.home();
-        console.printfile(TEMP_SIXEL_PATH + "sixelgallery.msg");
-        s = 0;
-        l = 0;
-        while (s < paths.length) {
-            if (s + 1 < paths.length) {
-                console.gotoxy(2, 9 + l);
-                printf("\1c\1h%2d\1k\1h)\1n %s\x010\1n", s + 1, paths[s][0]);
-                console.gotoxy(41, 9 + l);
-                printf("\1c\1h%2d\1k\1h)\1n %s\x010\1n", s + 2, paths[s + 1][0]);
-                s = s + 2;
-            } else {
-                console.gotoxy(2, 9 + l);
-                printf("\1c\1h%2d\1k\1h)\1n %s\x010\1n", s + 1, paths[s][0]);
-                s = s + 1;
+    var selection = "";    
+    var jsonPaths = "";
+    var fPaths = new File(js.startup_dir + "paths.json");
+    if (fPaths.open("r")) {
+        jsonPaths = JSON.parse(fPaths.read());
+        fPaths.close();
+        while (bbs.online && selection !== "Q") {
+            printf("\x01n\x010\x01L");
+            console.home();
+            console.printfile(js.startup_dir + "sixelgallery.msg", P_NOABORT);
+            s = 0;
+            l = 0;
+            while (s < Object.keys(jsonPaths).length) {
+                if (s + 1 < Object.keys(jsonPaths).length) {
+                    console.gotoxy(2, 9 + l);
+                    printf(MENU_ITEM_FMT, s + 1, jsonPaths[s].name);
+                    console.gotoxy(41, 9 + l);
+                    printf(MENU_ITEM_FMT, s + 2, jsonPaths[s + 1].name);
+                    s = s + 2;
+                } else {
+                    console.gotoxy(2, 9 + l);
+                    printf(MENU_ITEM_FMT, s + 1, jsonPaths[s].name);
+                    s = s + 1;
+                }
+                l = l + 1;
             }
-            l = l + 1;
-        }
-        print("\1n\r\n");
-        //printf(" \1c\1h S\1k\1h)\1n Toggle scaling: \1w\1h%s\r\n", (optionScale === true ? "On" : "Off"));
-        printf("\r\n\1b. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\1n")
-        print("\1n\r\n");
-        //printf("\r\nSelect: \1h1\1n-\1h%d\1n, \1hS\1n or \1hQ\1n to quit\1h> ", paths.length);
-        printf("\r\nSelect: \1h1\1n-\1h%d\1n or \1hQ\1n to quit\1h> ", paths.length);
-        //selection = console.getkeys("QS", paths.length, K_UPPER);
-        selection = console.getkeys("Q", paths.length, K_UPPER);
-        if (selection === "") {
-            selection = "Q";
-            //} else if (selection === "S") {
-            //    optionScale = optionScale === true ? false : true;
-        } else if (!isNaN(selection) && selection !== "") {
-            selection = parseInt(selection) - 1;
-            // Delete old previously created ZIP directories...
-            if (paths[selection][2] == true) {
-                var df = directory(backslash(paths[selection][1]) + "*");
-                for (var i = 0; i < df.length; i++) {
-                    if (file_isdir(df[i])) {
-                        var fs = directory(backslash(df[i]) + "*");
-                        for (var j = 0; j < fs.length; j++) {
-                            file_remove(fs[j]);
+            print("\x01n\r\n");
+            //printf(" \x01c\x01h S\x01k\x01h)\x01n Toggle scaling: \x01w\x01h%s\r\n", (optionScale === true ? "On" : "Off"));
+            printf("\r\n\x01b. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\x01n")
+            print("\x01n\r\n");
+            //printf("\r\nSelect: \x01h1\x01n-\x01h%d\x01n, \x01hS\x01n or \x01hQ\x01n to quit\x01h> ", paths.length);
+            printf("\r\nSelect: \x01h1\x01n-\x01h%d\x01n or \x01hQ\x01n to quit\x01h> ", Object.keys(jsonPaths).length);
+            //selection = console.getkeys("QS", paths.length, K_UPPER);
+            selection = console.getkeys("Q", Object.keys(jsonPaths).length, K_UPPER);
+            if (selection === "") {
+                selection = "Q";
+                //} else if (selection === "S") {
+                //    optionScale = optionScale === true ? false : true;
+            } else if (!isNaN(selection) && selection !== "") {
+                selection = parseInt(selection) - 1;
+                if (jsonPaths[selection].cleanup_zip_subdirs === true) {
+                    var df = directory(backslash(jsonPaths[selection].path) + "*");
+                    for (var i = 0; i < df.length; i++) {
+                        if (file_isdir(df[i])) {
+                            var fs = directory(backslash(df[i]) + "*");
+                            for (var j = 0; j < fs.length; j++) {
+                                file_remove(fs[j]);
+                            }
+                            rmdir(df[i]);
                         }
-                        rmdir(df[i]);
                     }
                 }
+                browseFiles(jsonPaths[selection].path);
             }
-            browseFiles(paths[selection][1]);
         }
     }
 }
+
+//var fIni = new File(js.startup_dir + 'settings.ini');
+var fIni = new File("../xtrn/sixelgallery/" + 'settings.ini'); // TODO - remove this hardcoded value.
+fIni.open('r');
+const settings = { root: fIni.iniGetObject() };
+fIni.close();
+fIni = undefined;
+var path_to_im_conv = settings.root.path_to_im_conv;
+var temp_sixel_path = settings.root.temp_sixel_path;
+var scale = settings.root.scale;
+var scale_max_width = settings.root.scale_max_width;
+var scale_max_height = settings.root.scale_max_height;
+
 var filename = argv[0];
 
-if (console.cterm_version >= 1189) {
-    
+if (console.cterm_version >= 1189) {    
     if (filename === "" || filename === undefined) {    
         mainMenu();
     } else {
         convertImage(filename);
-        console.pause();
     }    
-    
 } else {
-    print("\1y\1hTerminal not supported\1n... \1w\1h:(");
-    print("\1nInstall \1b\1hSyncTERM\1n or \1cMagiTerm\1n and call back!");
+    print("\x01y\x01hTerminal not supported\x01n... \x01w\x01h:(");
+    print("\x01nInstall \x01b\x01hSyncTERM\x01n or \x01cMagiTerm\x01n and call back!");
     console.pause();
 }
