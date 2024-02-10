@@ -2,6 +2,8 @@ load('cterm_lib.js');
 load("sbbsdefs.js");
 load("filebrowser.js");
 
+const SIXELGALLERY_PATH = js.exec_dir;
+
 const MENU_ITEM_FMT = "\x01c\x01h%2d\x01k\x01h)\x01n %s\x010\x01n";
 
 function convertImage(imgPath) {
@@ -15,14 +17,18 @@ function convertImage(imgPath) {
         var tmpSixel = backslash(temp_sixel_path) + "temp" + bbs.node_num + "-%05d.sixel";
         var cmd = path_to_im_conv + " -coalesce " + imgPath + " " + (scale ? ("-resize " + scale_max_width + "x" + scale_max_height + " ") : "") + tmpSixel;
         var rslt = system.exec(cmd);
-        console.clear(false);
         var frames = directory(backslash(temp_sixel_path) + "temp" + bbs.node_num + "*.sixel");
-        if (frames.length > 0) {
-            for (var f = 0; f < frames.length; f++) {                       
-                console.home();
+        if (frames.length > 1) {
+            for (var f = 0; f < frames.length; f++) {
+                console.home(false);
                 show_sixel(frames[f]);
                 file_remove(frames[f]);
             }
+        } else if (frames.length === 1) {
+            console.clear(false);
+            console.home(false);
+            show_sixel(frames[0]);
+            file_remove(frames[0]);
         } else {
             print("failed.");
             log(LOG_WARNING, "No output found for '" + imgPath + "'.");
@@ -53,7 +59,10 @@ function show_sixel(fn) { // borrowed from C.G. Learn's sixel.js ... Thank you a
     return false;
 }
 
-function browseFiles(path) {
+function browseFiles(path, cleanup_zip_subdirs) {
+    
+    var tempPaths = [];
+    
     var fb = new FileBrowser({
         'path': path,
         'top': path,
@@ -63,34 +72,38 @@ function browseFiles(path) {
         },
         'hide': ["???CAT.GIF", "*.DAB", "*.DAT", "*.EXB", "*.IXB", "*.RAW",
             "*.htm*", "*.com", "*.exe", "*.BBS", "UTILITY", "*.DIZ", "FLI",
-            "*.DIR", "*.ANS", "*.ASC", "*.XB", "*.PDF", "*.CN", "*.RIP","*.MP3",
+            "*.DIR", "*.ANS", "*.ASC", "*.XB", "*.PDF", "*.CN", "*.RIP", "*.MP3",
             "*.MP*", "*.NFO", "*.INI", "*.SDT", "*.SHA", "*.SHD", "*.SID"]
     });
-    fb.on(
-        "fileSelect",
+    
+    fb.on("fileSelect",
         function (fn) {
-        print("\x01n\x010\x01L");
-        var ext = file_getext(fn);
-        if (typeof ext != "undefined" && ext.toLowerCase() === ".zip") {
-            var destDir = fn.replace(ext, "");
-            if (!file_isdir(destDir)) {
-                system.exec(system.exec_dir + 'unzip -o -qq "' + fn + '" -d "' + destDir + '"');
+            print("\x01n\x010\x01L");
+            var ext = file_getext(fn);
+            if (typeof ext != "undefined" && ext.toLowerCase() === ".zip") {
+                var destDir = fn.replace(ext, "_zip");
+                if (!file_isdir(destDir)) {
+                    system.exec(system.exec_dir + 'unzip -o -qq "' + fn + '" -d "' + destDir + '"');
+                }
+                if (file_isdir(destDir)) {
+                    tempPaths.push(destDir);
+                    this.path = destDir;
+                }
+            } else if (ext.toLowerCase() === ".txt") {
+                console.clear(false);
+                console.printfile(fn);
+                console.pause();
+                console.clear();
+            } else {
+                convertImage(fn);
+                console.pause();
+                console.clear();
             }
-            if (file_isdir(destDir)) {
-                this.path = destDir;
-            }
-        } else if (ext.toLowerCase() === ".txt") {
-            console.clear(false);
-            console.printfile(fn);
-            console.pause();
-            console.clear();
-        } else {
-            convertImage(fn);
-            console.pause();
-            console.clear();
         }
-    });
+    );
+    
     fb.open();
+    
     while (!js.terminated) {
         var userInput = console.inkey(K_NONE, 5).toUpperCase();
         if (userInput === "Q") {
@@ -99,23 +112,45 @@ function browseFiles(path) {
         fb.getcmd(userInput);
         fb.cycle();
     }
+    
     fb.close();
     printf("\x01n\x010\x01L");
+    
+    if (cleanup_zip_subdirs) {
+        for (var t = 0; t < tempPaths.length; t++) {
+            deleteDir(tempPaths[t]);
+        }
+    }
+    
     console.clear();
     console.home();
+}
+
+function deleteDir(path) {
+    var df = directory(backslash(path) + "*");
+    for (var i = 0; i < df.length; i++) {
+        log("df["+i+"]: " + df[i]);
+        if (file_isdir(df[i])) {
+            deleteDir(df[i]);
+        } else {
+            file_remove(df[i]);
+        }
+    }           
+    rmdir(path); 
+    
 }
 
 function mainMenu() {
     var selection = "";
     var jsonPaths = "";
-    var fPaths = new File(js.startup_dir + "paths.json");
+    var fPaths = new File(backslash(SIXELGALLERY_PATH) + "paths.json");
     if (fPaths.open("r")) {
         jsonPaths = JSON.parse(fPaths.read());
         fPaths.close();
         while (bbs.online && selection !== "Q") {
             printf("\x01n\x010\x01L");
             console.home();
-            console.printfile(js.startup_dir + "sixelgallery.msg", P_NOABORT);
+            console.printfile(backslash(SIXELGALLERY_PATH) + "sixelgallery.msg", P_NOABORT);
             s = 0;
             l = 0;
             while (s < Object.keys(jsonPaths).length) {
@@ -132,31 +167,16 @@ function mainMenu() {
                 }
                 l = l + 1;
             }
-            print("\x01n\r\n");
-            printf(" \x01c\x01h S\x01k\x01h)\x01n Toggle scaling: \x01w\x01h%s\r\n", (scale ? "On" : "Off"));
             printf("\r\n\x01b. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\x01n");
             print("\x01n\r\n");
             printf("\r\nSelect: \x01h1\x01n-\x01h%d\x01n, \x01hS\x01n, or \x01hQ\x01n to quit\x01h> ", Object.keys(jsonPaths).length);
-            selection = console.getkeys("QS", Object.keys(jsonPaths).length, K_UPPER);
+            selection = console.getkeys("Q", Object.keys(jsonPaths).length, K_UPPER);
             if (selection === "") {
                 selection = "Q";
-            } else if (selection === "S") {
-                scale = scale ? false : true;
             } else if (!isNaN(selection) && selection !== "") {
                 selection = parseInt(selection) - 1;
-                if (jsonPaths[selection].cleanup_zip_subdirs) {
-                    var df = directory(backslash(jsonPaths[selection].path) + "*");
-                    for (var i = 0; i < df.length; i++) {
-                        if (file_isdir(df[i])) {
-                            var fs = directory(backslash(df[i]) + "*");
-                            for (var j = 0; j < fs.length; j++) {
-                                file_remove(fs[j]);
-                            }
-                            rmdir(df[i]);
-                        }
-                    }
-                }
-                browseFiles(jsonPaths[selection].path);
+                scale = jsonPaths[selection].resize;
+                browseFiles(jsonPaths[selection].path, jsonPaths[selection].cleanup_zip_subdirs);                                
             }
         }
     }
@@ -164,7 +184,9 @@ function mainMenu() {
 
 var fIni = new File(js.exec_dir + 'settings.ini');
 fIni.open('r');
-const settings = { root: fIni.iniGetObject() };
+const settings = {
+    root: fIni.iniGetObject()
+};
 fIni.close();
 fIni = undefined;
 var path_to_im_conv = settings.root.path_to_im_conv;
