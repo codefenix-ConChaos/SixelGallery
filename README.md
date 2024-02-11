@@ -65,26 +65,31 @@ codefenix@conchaos.synchro.net
        {
           "name": "Some homemade food",
           "path": "c:\\files\\images\\food",
-          "cleanup_zip_subdirs": false
+          "cleanup_zip_subdirs": false,
+          "resize": true
        },
        {
           "name": "GIFs Galore CD-ROM",
           "path": "c:\\files\\gifgalor\\GIFS",
-          "cleanup_zip_subdirs": false
+          "cleanup_zip_subdirs": false,
+          "resize": true
        },
        {
           "name": "fsxNet Images",
           "path": "c:\\files\\fsxnet_imge",
-          "cleanup_zip_subdirs": true
+          "cleanup_zip_subdirs": true,
+          "resize": true
        }
     ]
     ```
              
     The `cleanup_zip_subdirs` option removes subdirectories created as 
-    a result of browsing ZIP files. 
+    a result of browsing ZIP files.
+
+    The `resize` option controls whether to have ImageMagick size
    
     
- 6. Add to SCFG -> External Programs-> Online Programs (Doors):
+ 7. Add to SCFG -> External Programs-> Online Programs (Doors):
 
     ```
     Name                  Sixel Gallery
@@ -93,7 +98,7 @@ codefenix@conchaos.synchro.net
     Command Line          ?sixelgallery
     ```
 
- 7. Add to File Options -> Viewable Files: 
+ 8. Add to File Options -> Viewable Files: 
 
     ```
     GIF   ?../xtrn/sixelgallery/sixelgallery.js %f
@@ -116,16 +121,24 @@ codefenix@conchaos.synchro.net
  console nicely.
  
  If you don't wish to auto-scale your images in the terminal, you can set
- the `scale` setting to false, and ImageMagick will not scale down the
- resulting image. However, they will likely end up being too large to view
- all at once.
+ the `resize` setting to false in your paths.json file, and ImageMagick will 
+ not resize the resulting image. However, they will likely end up being too 
+ large to view all at once. 
+ 
+ (`resize` takes the place of the `scale` option in settings.ini)
 
 
 
 ## Other Notes
  
- I thought it might be cool to add support for animations, such as animated
- GIF files, as evidenced by some of the comments in the code. Maybe an 
- enhancement for another day.
+ If the input image has multiple frames of animation (e.g. and animated GIF),
+ ImageMagick produces multiple output frames if the input image. Sixelgallery
+ then outputs each sixel image to the terminal.
+
+ ![SyncTERM - ConstructiveChaos BBS      ssh 2023-07-24 15-31-51](https://github.com/codefenix-ConChaos/SixelGallery/assets/12660452/285b06d0-e599-4fce-b8cd-99029d4321ca)
+
+ Small images work best; dimensions of around 200x200 or less are recommended.
+ It's also recommended to set `resize` to false for any paths containing 
+ lots of animation files.
  
  
