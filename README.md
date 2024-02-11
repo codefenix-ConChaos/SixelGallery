@@ -86,7 +86,8 @@ codefenix@conchaos.synchro.net
     The `cleanup_zip_subdirs` option removes subdirectories created as 
     a result of browsing ZIP files.
 
-    The `resize` option controls whether to have ImageMagick size
+    The `resize` option controls whether to have ImageMagick resize the
+    image to the dimensions specified in settings.ini.
    
     
  7. Add to SCFG -> External Programs-> Online Programs (Doors):
@@ -105,6 +106,8 @@ codefenix@conchaos.synchro.net
     JPG   ?../xtrn/sixelgallery/sixelgallery.js %f
     PNG   ?../xtrn/sixelgallery/sixelgallery.js %f
     ```
+
+    
     
     If you have `?archive list %f` configured for * (libarchive), make sure 
     you include the above image types BEFORE it.
@@ -125,7 +128,10 @@ codefenix@conchaos.synchro.net
  not resize the resulting image. However, they will likely end up being too 
  large to view all at once. 
  
- (`resize` takes the place of the `scale` option in settings.ini)
+ The difference between `resize` in paths.json and `scale` in settings.ini:
+
+ * `resize` in paths.json controls the resizing of the resulting sixel image on a per-path basis, and is enforced when calling sixelgallery.js as an external program.
+ * `scale` in settings.ini also controls the resizing of the resulting sixel image, but it's enforced only when calling sixelgallery.js on individual image files, such as those specified for viewable files in your file area (see 'How it works' and 'Instructions' sections above). You will usually want to leave this set to `true`. 
 
 
 
