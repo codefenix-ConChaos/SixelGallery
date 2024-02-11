@@ -137,14 +137,14 @@ codefenix@conchaos.synchro.net
 
 ## Other Notes
  
- If the input image has multiple frames of animation (e.g. and animated GIF),
- ImageMagick produces multiple output frames if the input image. Sixelgallery
+ If the input image has multiple frames of animation (e.g. an animated GIF),
+ ImageMagick produces multiple output frames of the input image. Sixelgallery
  then outputs each sixel image to the terminal.
 
  ![SyncTERM - ConstructiveChaos BBS      ssh 2023-07-24 15-31-51](https://github.com/codefenix-ConChaos/SixelGallery/assets/12660452/285b06d0-e599-4fce-b8cd-99029d4321ca)
 
  Small images work best; dimensions of around 200x200 or less are recommended.
  It's also recommended to set `resize` to false for any paths containing 
- lots of animation files.
+ many animation files.
  
  
