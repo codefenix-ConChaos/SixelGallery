@@ -129,15 +129,13 @@ function browseFiles(path, cleanup_zip_subdirs) {
 function deleteDir(path) {
     var df = directory(backslash(path) + "*");
     for (var i = 0; i < df.length; i++) {
-        log("df["+i+"]: " + df[i]);
         if (file_isdir(df[i])) {
             deleteDir(df[i]);
         } else {
             file_remove(df[i]);
         }
     }           
-    rmdir(path); 
-    
+    rmdir(path);     
 }
 
 function mainMenu() {
@@ -169,7 +167,7 @@ function mainMenu() {
             }
             printf("\r\n\x01b. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .\x01n");
             print("\x01n\r\n");
-            printf("\r\nSelect: \x01h1\x01n-\x01h%d\x01n, \x01hS\x01n, or \x01hQ\x01n to quit\x01h> ", Object.keys(jsonPaths).length);
+            printf("\r\nSelect: \x01h1\x01n-\x01h%d\x01n, or \x01hQ\x01n to quit\x01h> ", Object.keys(jsonPaths).length);
             selection = console.getkeys("Q", Object.keys(jsonPaths).length, K_UPPER);
             if (selection === "") {
                 selection = "Q";
