@@ -83,7 +83,14 @@ function browseFiles(path, cleanup_zip_subdirs) {
             if (typeof ext != "undefined" && ext.toLowerCase() === ".zip") {
                 var destDir = fn.replace(ext, "_zip");
                 if (!file_isdir(destDir)) {
-                    system.exec(system.exec_dir + 'unzip -o -qq "' + fn + '" -d "' + destDir + '"');
+                    // Check /sbbs/exec for unzip.exe, as is the expected path 
+                    // on Windows, and call it if it exists there. Otherwise,
+                    // assume unzip exists in the sytem path (i.e.: *nix).
+                    if (file_exists(system.exec_dir + 'unzip.exe') || file_exists(system.exec_dir + 'unzip')) {
+                        system.exec(system.exec_dir + 'unzip -o -qq "' + fn + '" -d "' + destDir + '"');
+                    } else {
+                        system.exec( 'unzip -o -qq "' + fn + '" -d "' + destDir + '"' );
+                    }
                 }
                 if (file_isdir(destDir)) {
                     tempPaths.push(destDir);
